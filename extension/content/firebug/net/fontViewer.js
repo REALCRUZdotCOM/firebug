@@ -22,13 +22,27 @@ function(Obj, Firebug, Domplate, Locale, Xpcom, Events, Win, Css, Dom, Str, Font
 
 // ********************************************************************************************* //
 
+// List of font content types
+var contentTypes =
+[
+    "application/x-woff",
+    "application/x-font-woff",
+    "application/x-ttf",
+    "application/x-font-ttf",
+    "font/ttf",
+    "font/woff",
+    "application/x-otf",
+    "application/x-font-otf",
+    "application/font-woff"
+];
+
 // ********************************************************************************************* //
 // Model implementation
 
 Firebug.FontViewerModel = Obj.extend(Firebug.Module,
 {
     dispatchName: "fontViewer",
-    contentTypes: Fonts.contentTypes,
+    contentTypes: contentTypes,
 
     initialize: function()
     {
@@ -54,7 +68,42 @@ Firebug.FontViewerModel = Obj.extend(Firebug.Module,
      */
     isFont: function(contentType, url, data)
     {
-        return Fonts.isFont.apply(null, arguments);
+        if (!contentType)
+            return false;
+
+        if (NetUtils.matchesContentType(contentType, contentTypes))
+        {
+            if (FBTrace.DBG_FONTS)
+            {
+                FBTrace.sysout("fontviewer.isFont; content type: "+contentType,
+                    {url: url, data: data});
+            }
+
+            return true;
+        }
+
+        // Workaround for font responses without proper content type
+        // Let's consider all responses starting with "wOFF" as font. In the worst
+        // case there will be an exception when parsing. This means that no-font
+        // responses (and post data) (with "wOFF") can be parsed unnecessarily,
+        // which represents a little overhead, but this happens only if the request
+        // is actually expanded by the user in the UI (Net & Console panel).
+        var extension = Url.getFileExtension(url);
+        var validExtension = /woff|otf|ttf/.exec(extension);
+        if (validExtension && (!data || Str.hasPrefix(data, "wOFF") || Str.hasPrefix(data, "OTTO")))
+        {
+            if (FBTrace.DBG_FONTS)
+            {
+                FBTrace.sysout("fontviewer.isFont; Font without proper content type",
+                    {url: url, data: data});
+            }
+
+            return true;
+        }
+
+        contentType = contentType.split(";")[0];
+        contentType = Str.trim(contentType);
+        return contentTypes[contentType];
     },
 
     /**

@@ -15,11 +15,10 @@ define([
     "firebug/net/jsonViewer",
     "firebug/trace/traceModule",
     "firebug/trace/traceListener",
-    "firebug/lib/fonts",
     "firebug/js/sourceCache"
 ],
 function(Obj, Firebug, Xpcom, HttpRequestObserver, HttpResponseObserver, Locale, Events,
-    Url, Http, Str, Win, JSONViewerModel, TraceModule, TraceListener, Fonts) {
+    Url, Http, Str, Win, JSONViewerModel, TraceModule, TraceListener) {
 
 // ********************************************************************************************* //
 // Constants
